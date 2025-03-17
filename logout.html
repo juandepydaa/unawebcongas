@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>logout</title>
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('userSession')) {
+          localStorage.removeItem('userSession');  // Eliminar la sesión solo si existe
+        }
+        //window.location('logout.html');  // Redirigir a la página de login
+        //window.location.href ='logout.html'
+        window.location.replace('login.html');  // Redirigir a la página de login
+    </script>
+    <p>Su sesi&oacute;n se ha cerrado de manera correcta.</p>
+</body>
+</html>

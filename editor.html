@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Publicaciones</title>
+  <!-- Agregar enlaces para TinyMCE -->
+  <script src="https://cdn.tiny.cloud/1/d48rtbntoidbh2gsu6d0ujhxezr5yjjmgclkdbjxbi19bkcx/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+
+  <style>
+    /* Estilos básicos para la página */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 1rem auto;
+      background-color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 0.5rem;
+    }
+
+    input[type="text"], input[type="submit"], textarea {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    input[type="date"] {
+      width: 150px;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    input[type="submit"] {
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #27ae60;
+    }
+
+    .posts {
+      margin-top: 2rem;
+    }
+
+    .post {
+      background-color: #ecf0f1;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .post h2 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    // Verificar si el usuario tiene una sesión activa
+    if (!localStorage.getItem('userSession')) {
+      window.location.href = 'login.html'; // Redirigir a login si no está logueado
+    }
+
+  </script>
+
+  <div class="container mt-5">
+    <h3>Nuevo Post</h3>
+    <h6>
+      <script>
+        document.write('Usuario: ' + localStorage.getItem('userSession') + '&nbsp;|&nbsp;<a href="logout.html"><span>Cerrar sesi&oacute;n</span></a>');
+        document.write('&nbsp;|&nbsp;<a href="#" onclick="newPost();"><span>Nuevo post</span></a>');
+      </script>
+    </h6>
+    
+    <form id="postForm" novalidate method="post">
+      
+      <div class="form-group">
+        <input type="hidden" id="idPost" name="idPost" value="0">
+        <label for="title">Título:</label>
+        <input type="text" id="title" name="title" required placeholder="Escribe el título de la publicación">
+      </div>
+
+      <div class="form-group">
+        <label for="content">Contenido:</label>
+        <textarea id="content" name="content" rows="20" required placeholder="Escribe el contenido aquí"></textarea>
+      </div>
+
+      <div class="form-group">
+        <input type="submit" value="Publicar" id="publish-button">
+      </div>
+    </form>
+    <div id="message"></div>
+  </div>
+  
+  <script>
+    // Inicializa el editor TinyMCE
+    tinymce.init({
+      selector: '#content',
+      plugins: 'advlist autolink lists link image charmap print preview anchor textcolor',
+      toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link image',
+    });
+
+    // Agregar el evento al botón "Publicar"
+    document.getElementById('publish-button').addEventListener('click', function(e) {
+      e.preventDefault(); // Previene el comportamiento por defecto del botón (enviar el formulario)
+  
+      // Obtener los datos del formulario
+      var title = document.getElementById('title').value;
+      var content = tinymce.get('content').getContent(); // Obtener contenido del editor TinyMCE
+      var username = localStorage.getItem('userSession');
+      var idPost = document.getElementById('idPost').value;
+
+      // Verificar que el título y contenido no estén vacíos
+      if (title && content) {
+        // Crear un FormData con los datos del formulario
+        var formData = new FormData();
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('username', username);
+        formData.append('idpost', idPost);
+
+        // Hacer la solicitud POST a Google Apps Script
+        fetch('https://script.google.com/macros/s/AKfycbx4DALGWZ2iMUdEa01RCIIEhbmavak_fzHzXnsiGo0hwWPztDp8m8CdZHclVg8R92Tp/exec', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+          // Mostrar mensaje de éxito
+          //document.getElementById('message').textContent = "Publicación guardada con éxito.";
+          //document.getElementById('message').style.color = 'green';
+
+          // Limpiar el formulario y el editor
+          //document.getElementById('postForm').reset();
+          //tinymce.get('content').setContent(''); // Limpiar el editor TinyMCE
+
+          // Dividir la respuesta por el carácter '/'
+          const responseParts = data.split('/');
+          const status = responseParts[0]; // "insertok" o "updateok"
+          const codRandom = responseParts[1]; // El código aleatorio de 16 dígitos (si es insertok)
+          
+          if (status === 'insertok') {
+            // Si la respuesta es "insertok", significa que se ha creado una nueva publicación
+            document.getElementById('idPost').value = codRandom; // Asignar el código aleatorio al input
+
+            // Mostrar el mensaje de éxito para la creación de la publicación
+            document.getElementById('message').textContent = "Publicación creada con éxito.";
+            document.getElementById('message').style.color = 'green';
+            document.getElementById('publish-button').value='Actualizar';
+          } else if (status === 'updateok') {
+            // Si la respuesta es "updateok", significa que se ha actualizado una publicación
+            document.getElementById('message').textContent = "La publicación se ha actualizado con éxito.";
+            document.getElementById('message').style.color = 'green';
+          }
+
+          // No limpiar el formulario ni el editor, ya que en ambos casos debemos mantener los datos
+
+        })
+        .catch(error => {
+          // Manejar errores
+          console.error('Error:', error);
+          document.getElementById('message').textContent = "Hubo un error al publicar.";
+          document.getElementById('message').style.color = 'red';
+        });
+      } else {
+        // Si falta el título o contenido, mostrar un mensaje
+        document.getElementById('message').textContent = "Por favor, completa todos los campos.";
+        document.getElementById('message').style.color = 'red';
+      }
+    });
+
+    function newPost() {
+      // Limpiamos el formulario
+      document.getElementById('idPost').value = "0";
+      document.getElementById('title').value = "";
+      document.getElementById('message').textContent = "";
+      //document.getElementById('message').style.color = 'green';
+      tinymce.get('content').setContent(''); // Limpiar el editor TinyMCE
+      // Limpiar el formulario y el editor
+      //document.getElementById('postForm').reset();
+      document.getElementById('publish-button').value='Publicar';
+      
+    }
+
+  </script>
+</body>
+</html>

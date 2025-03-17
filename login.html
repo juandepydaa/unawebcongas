@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>Acceso al sistema</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contrase&ntilde;a:</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Iniciar sesi&oacute;n</button>
+        </form>
+        <div id="error-message" class="text-danger" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+          e.preventDefault();
+    
+          var username = document.getElementById('username').value;
+          var password = document.getElementById('password').value;
+    
+          // Llamar a Google Apps Script para validar el login
+          fetch('https://script.google.com/macros/s/AKfycbxSIZs5z4XGu3SZMRuvnr3457_yeTVriKyZGaAq_KPdrdGeMRMyhD_5Awdjr7xAKWrE/exec', {
+            method: 'POST',
+            body: JSON.stringify({ username: username, password: password }),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+            // Si es exitoso, guarda la sesión en el localStorage y redirige al editor
+            localStorage.setItem('userSession', username);  // Guardar el nombre de usuario en la sesión
+            // Si es exitoso, redirige al editor
+          window.location.href = 'editor.html'; // Redirigir a la página del editor
+        } else {
+          // Si hay error, mostrar el mensaje de error
+          document.getElementById("error-message").style.display = "block";
+          document.getElementById("error-message").innerText = data.message;
+        }
+      })
+      .catch(error => {
+        console.error('Error en la validación:', error);
+        document.getElementById("error-message").style.display = "block";
+        document.getElementById("error-message").innerText = "Hubo un problema al intentar iniciar sesión.";
+      });
+    });
+  </script>
+</body>
+</html>
